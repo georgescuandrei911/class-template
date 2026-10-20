@@ -16,6 +16,8 @@ int main()
     step = 0.5;
     max = 100;
 
+    cout << "TEST" << endl;
+
     return 0;
 
 }
