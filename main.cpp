@@ -10,7 +10,7 @@ int main()
 
     A = A + B;
 
-    cout << A + B << endl;
+    cout << A.x << " " << A.y << endl;
 
     return 0;
 
