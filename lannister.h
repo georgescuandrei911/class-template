@@ -27,7 +27,7 @@ class Vector2
         //IO operators
         friend istream& operator>>(istream& input, Vector2& vector);
         friend ostream& operator<<(ostream& output, const Vector2& vector);
-
+        
 };
 
 class Math
