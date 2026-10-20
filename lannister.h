@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 class Vector2
 {
 
@@ -16,6 +18,8 @@ class Vector2
 
         Vector2();
         Vector2(double x, double y);
+
+        Vector2 operator+(const Vector2& AUX) const;
 
 };
 

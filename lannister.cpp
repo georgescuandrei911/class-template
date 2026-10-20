@@ -5,6 +5,8 @@
 Vector2 :: Vector2() {}
 Vector2 :: Vector2(double x, double y){ this->x = x; this->y = y; }
 
+Vector2 Vector2 :: operator+(const Vector2& AUX) const {return Vector2(x + AUX.x, y + AUX.y);}
+
 
 
 //math

@@ -1,12 +1,16 @@
 //g++ *.cpp -o main && ./main
 
-#include "file.h"
 #include "lannister.h"
 
 int main()
 {
 
-    cout << "TEST " << Math :: dot_product(Vector2(1, 0), Vector2(0, 1)) << endl;
+    Vector2 A(2, 3);
+    Vector2 B(5, 5);
+
+    A = A + B;
+
+    cout << A + B << endl;
 
     return 0;
 
