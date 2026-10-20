@@ -5,18 +5,16 @@
 class Vector2
 {
 
-    private:
+    public:
 
         //x and y
         
         double x = 0;
         double y = 0;
 
-    public:
+        //constructors
 
         Vector2();
-        Vector2(double x);
-        Vector2(double y);
         Vector2(double x, double y);
 
 };
@@ -31,5 +29,7 @@ class Math
         static const double pi;
         static const double e;
         static const double G;
+
+        static double dot_product(const Vector2& v1, const Vector2& v2);
 
 };
