@@ -1,7 +1,5 @@
 #pragma once
 
-#include <istream>
-#include <ostream>
 #include <iostream>
 
 using namespace std;
@@ -21,8 +19,12 @@ class Vector2
         Vector2();
         Vector2(double x, double y);
 
+        //calcul operators
         Vector2 operator+(const Vector2& AUX) const;
+        Vector2 operator*(const Vector2& AUX) const;
+        Vector2 operator*(const double AUX) const;
 
+        //IO operators
         friend istream& operator>>(istream& input, Vector2& vector);
         friend ostream& operator<<(ostream& output, const Vector2& vector);
 

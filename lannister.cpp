@@ -5,8 +5,12 @@
 Vector2 :: Vector2() {}
 Vector2 :: Vector2(double x, double y){ this->x = x; this->y = y; }
 
-Vector2 Vector2 :: operator+(const Vector2& AUX) const {return Vector2(x + AUX.x, y + AUX.y);}
+//calcul operators
+Vector2 Vector2 :: operator+(const Vector2& AUX) const { return Vector2(x + AUX.x, y + AUX.y); }
+Vector2 Vector2 :: operator*(const Vector2& AUX) const { return Vector2(x * AUX.x, y * AUX.y); }
+Vector2 Vector2 :: operator*(const double AUX) const  {return Vector2(x * AUX, y * AUX); }
 
+//IO operators
 istream& operator>>(istream& input, Vector2& vector){ input >> vector.x >> vector.y; return input; }
 ostream& operator<<(ostream& output, const Vector2& vector){ output << vector.x << " " << vector.y; return output; }
 

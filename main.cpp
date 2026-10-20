@@ -6,10 +6,10 @@ int main()
 {
 
     Vector2 A(2, 3);
-    Vector2 B(5, 5);
+    int a;
 
-    cin >> A >> B;
-    cout << A;
+    cin >> A >> a;
+    cout << A * a;
 
     return 0;
 
