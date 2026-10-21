@@ -25,3 +25,32 @@ const double Math::e  = 2.718281828459045;
 const double Math::G  = 6.67430e-11;
 
 double Math :: dot_product(const Vector2& v1, const Vector2& v2){ return (v1.x * v2.x + v1.y * v2.y);}
+
+void readFile(const char* filename) {
+    std::ifstream file(filename);
+
+    if (!file) {
+        std::cerr << "Could not open file\n";
+        return;
+    }
+
+    char line[256];
+
+    while (file.getline(line, sizeof(line))) {
+        char surname[50], name[50];
+        int year;
+        double value;
+
+        int count = std::sscanf(
+            line, " %49[^,], %d, %lf, %49s",
+            surname, &year, &value, name
+        );
+
+        if (count == 4) {
+            std::cout << surname << " "
+                      << year << " "
+                      << value << " "
+                      << name << '\n';
+        }
+    }
+}

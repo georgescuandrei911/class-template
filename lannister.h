@@ -1,6 +1,8 @@
 #pragma once
 
 #include <iostream>
+#include <cstdio>
+#include <fstream>
 
 using namespace std;
 
@@ -44,3 +46,4 @@ class Math
         static double dot_product(const Vector2& v1, const Vector2& v2);
 
 };
+
