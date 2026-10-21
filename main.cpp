@@ -10,7 +10,7 @@ int main()
 
     cin >> A >> a;
     cout << Math :: dot_product(Vector2(2, 3), Vector2(4, 6)) << endl;
-    cout << A * a * a;
+    cout << A * a;
 
     return 0;
 
