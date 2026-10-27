@@ -54,3 +54,19 @@ void readFile(const char* filename) {
         }
     }
 }
+
+//lab5
+
+CorpCeresc::CorpCeresc(double m) : masa(m) {}
+
+void CorpCeresc::afisare() {
+    std::cout << "Masa: " << masa << '\n';
+}
+
+Stea::Stea(double m, double t)
+    : CorpCeresc(m), temperatura(t) {}
+
+void Stea::afisare() {
+    CorpCeresc::afisare();
+    std::cout << "Temperatura: " << temperatura << '\n';
+}

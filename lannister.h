@@ -47,3 +47,21 @@ class Math
 
 };
 
+//lab5
+
+class CorpCeresc {
+protected:
+    double masa;
+
+public:
+    CorpCeresc(double m);
+    void afisare();
+};
+
+class Stea : public CorpCeresc {
+    double temperatura;
+
+public:
+    Stea(double m, double t);
+    void afisare();
+};
