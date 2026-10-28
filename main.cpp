@@ -9,7 +9,7 @@ int main()
 
     ofstream(output, ios::binary | ios::trunc).close();
 
-    for(int time = 0; time <= 100; time++)
+    for(int time = 0; time <= 777; time++)
     {
 
         celestial_object planet(time * 1.9, time * 0.5, time * 2.6, time * 5.1, time * 7, time * 2.3);

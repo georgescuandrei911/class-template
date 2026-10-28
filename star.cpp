@@ -29,9 +29,9 @@ celestial_object :: celestial_object(double mass, double radius, double px, doub
 
 int write(double time, const celestial_object& A, const char* file)
 {
-    static_assert(std::is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
+    static_assert(is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
 
-    ofstream output(file, std::ios::binary);
+    ofstream output(file, ios::binary | ios::app);
 
     if (!output) { cerr << "could not open " << file << '\n'; return 1; }
 
