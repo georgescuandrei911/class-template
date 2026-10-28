@@ -49,6 +49,8 @@ int main()
 
         }
 
+        if((int)time % 100 == 0) cout << 100 * time / max_time << "'%' completed" << endl;
+
     }
 
     delete[] celestial_objects;
