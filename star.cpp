@@ -75,8 +75,6 @@ void force_ij :: set_component(const vector_2d& AUX) { component = AUX; }
 void force_ij :: set_modulus(const double& AUX) { modulus = AUX; }
 void force_ij :: set_distance(const double& AUX) { distance = AUX; }
 
-int sign(double x){ return (x > 0) - (x < 0); }
-
 void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int number_of_celestial_objects)
 {
 
@@ -109,10 +107,17 @@ void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int nu
     }
 }
 
-void update(const vector_2d AUX, celestial_object object, double time_step)
+void update(const vector_2d AUX, celestial_object& object, double time_step)
 {
 
-    
+    object.set_acceleration(vector_2d(AUX.x / object.get_mass(), AUX.y / object.get_mass()));
+
+    object.set_velocity(vector_2d(object.get_velocity().x + object.get_acceleration().x * time_step,
+                                  object.get_velocity().y + object.get_acceleration().y * time_step));
+                                  
+
+    object.set_position(vector_2d(object.get_position().x + object.get_velocity().x * time_step,
+                                  object.get_position().y + object.get_velocity().y * time_step));
 
 }
 

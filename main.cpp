@@ -33,14 +33,25 @@ int main()
     for(int i = 0; i < number_of_celestial_objects; i++) in >> celestial_objects[i];
 
 
+    vector_2d* forces = new vector_2d[number_of_celestial_objects];
+
     for(double time = 0; time <= max_time; time += time_step)
     {
 
+        set_force(forces, celestial_objects, number_of_celestial_objects);
+
         for(int j = 0; j < number_of_celestial_objects; j++)
+        {
+
             write(time, celestial_objects[j], output);
+
+            update(forces[j], celestial_objects[j], time_step);
+
+        }
 
     }
 
     delete[] celestial_objects;
+    delete[] forces;
 
 }
