@@ -41,6 +41,28 @@ class celestial_object
     public:
 
     celestial_object(double mass, double radius, double px, double py, double vx, double vy);
+
+    //getters
+    double get_mass();
+    double get_radius();
+
+    vector_2d get_position();
+    vector_2d get_velocity();
+    vector_2d get_acceleration();
+
+};
+
+class force_ij
+{
+
+    private:
+
+        vector_2d component{0, 0};
+
+        double total_force = 0;
+
+        double distance = 0;
+
 };
 
 int write(double time, const celestial_object& A, const char* file);

@@ -27,6 +27,13 @@ celestial_object :: celestial_object(double mass, double radius, double px, doub
 
 }
 
+double celestial_object :: get_mass(){ return mass; }
+double celestial_object :: get_radius(){ return radius; }
+
+vector_2d celestial_object :: get_position(){ return position; }
+vector_2d celestial_object :: get_velocity(){ return velocity; }
+vector_2d celestial_object :: get_acceleration(){ return acceleration; }
+
 int write(double time, const celestial_object& A, const char* file)
 {
     static_assert(is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
