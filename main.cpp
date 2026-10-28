@@ -32,6 +32,7 @@ int main()
 
     for(int i = 0; i < number_of_celestial_objects; i++) in >> celestial_objects[i];
 
+    in.close();
 
     vector_2d* forces = new vector_2d[number_of_celestial_objects];
 
