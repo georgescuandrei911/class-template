@@ -27,14 +27,45 @@ celestial_object :: celestial_object(double mass, double radius, double px, doub
 
 }
 
-double celestial_object :: get_mass(){ return mass; }
-double celestial_object :: get_radius(){ return radius; }
+//getters
 
-vector_2d celestial_object :: get_position(){ return position; }
-vector_2d celestial_object :: get_velocity(){ return velocity; }
-vector_2d celestial_object :: get_acceleration(){ return acceleration; }
+double celestial_object :: get_mass() const { return mass; }
+double celestial_object :: get_radius() const { return radius; }
 
-force_ij :: force_ij() {}
+vector_2d celestial_object :: get_position() const { return position; }
+vector_2d celestial_object :: get_velocity() const { return velocity; }
+vector_2d celestial_object :: get_acceleration() const { return acceleration; }
+
+//setters
+
+void celestial_object :: set_mass(const double& AUX) { mass = AUX; }
+void celestial_object :: set_radius(const double& AUX) { radius = AUX; }
+
+void celestial_object :: set_position(const vector_2d& AUX) { position = AUX; }
+void celestial_object :: set_velocity(const vector_2d& AUX) { velocity = AUX; }
+void celestial_object :: set_acceleration(const vector_2d& AUX) { acceleration = AUX; }
+
+celestial_object celestial_object :: operator+(const celestial_object& AUX) const 
+{ 
+    
+    return celestial_object(mass + AUX.mass, radius + AUX.radius,
+                            position.x + AUX.position.x, position.y + AUX.position.y,
+                            velocity.x + AUX.velocity.x, velocity.y + AUX.velocity.y);
+}
+
+istream& operator>>(istream& input, celestial_object& AUX)
+{ 
+    
+    input >> AUX.mass >> AUX.radius
+
+    >> AUX.position.x >> AUX.position.y
+    >> AUX.velocity.x >> AUX.velocity.y;
+
+    AUX.set_acceleration(vector_2d(0, 0));
+
+    return input;
+
+}
 
 vector_2d force_ij :: get_component(){ return vector_2d(component.x, component.y); }
 double force_ij :: get_modulus(){ return modulus; }
@@ -44,13 +75,54 @@ void force_ij :: set_component(const vector_2d& AUX) { component = AUX; }
 void force_ij :: set_modulus(const double& AUX) { modulus = AUX; }
 void force_ij :: set_distance(const double& AUX) { distance = AUX; }
 
+int sign(double x){ return (x > 0) - (x < 0); }
+
+void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int number_of_celestial_objects)
+{
+
+    for(int i = 0; i < number_of_celestial_objects; i++)AUX[i] = vector_2d(0, 0);
+
+    for(int i = 0; i < number_of_celestial_objects - 1; i++)
+    {
+
+        for(int j = i + 1; j < number_of_celestial_objects; j++)
+        {
+
+            const vector_2d distance(celestial_objects[j].get_position().x - celestial_objects[i].get_position().x,
+                                        celestial_objects[j].get_position().y - celestial_objects[i].get_position().y);
+
+            const double hypot_value = hypot(distance.x, distance.y);
+
+            if(hypot_value == 0.0)continue; 
+
+            const double modulus = G * celestial_objects[i].get_mass() * celestial_objects[j].get_mass() / 
+                             hypot_value / hypot_value;
+
+            AUX[i].x = AUX[i].x + modulus * distance.x / hypot_value;
+            AUX[i].y = AUX[i].y + modulus * distance.y / hypot_value;
+
+            AUX[j].x = AUX[j].x - modulus * distance.x / hypot_value;
+            AUX[j].y = AUX[j].y - modulus * distance.y / hypot_value;
+
+        }
+
+    }
+}
+
+void update(const vector_2d AUX, celestial_object object, double time_step)
+{
+
+    
+
+}
+
 int write(double time, const celestial_object& A, const char* file)
 {
     static_assert(is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
 
-    ofstream output(file, ios::binary | ios::app);
+    ofstream output(file, ios :: binary | ios :: app);
 
-    if (!output) { cerr << "could not open " << file << '\n'; return 1; }
+    if (!output) { cerr << "could not open " << file << endl; return 1; }
 
     output.write(reinterpret_cast<const char*>(&time), sizeof(time));
 

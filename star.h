@@ -1,5 +1,8 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
+
+#define G 6.67430e-11
 
 using namespace std;
 
@@ -8,10 +11,14 @@ class vector_2d
 
     public:
 
-    double x;
-    double y;
+    double x = 0;
+    double y = 0;
+
+    vector_2d() = default;
 
     vector_2d(double x, double y);
+
+    //getters
 
     //calcul operators
     vector_2d operator+(const vector_2d& AUX) const;
@@ -40,15 +47,32 @@ class celestial_object
 
     public:
 
+    celestial_object() = default;
+
     celestial_object(double mass, double radius, double px, double py, double vx, double vy);
 
     //getters
-    double get_mass();
-    double get_radius();
+    double get_mass() const;
+    double get_radius() const;
 
-    vector_2d get_position();
-    vector_2d get_velocity();
-    vector_2d get_acceleration();
+    vector_2d get_position() const;
+    vector_2d get_velocity() const;
+    vector_2d get_acceleration() const;
+
+    //setters
+    void set_mass(const double& AUX);
+    void set_radius(const double& AUX);
+
+    void set_position(const vector_2d& AUX);
+    void set_velocity(const vector_2d& AUX);
+    void set_acceleration(const vector_2d& AUX);
+
+    //calcul operators
+
+    celestial_object operator+(const celestial_object& AUX) const;
+
+    //IO operators
+    friend istream& operator>>(istream& input, celestial_object& AUX);
 
 };
 
@@ -64,7 +88,7 @@ class force_ij
 
     public:
 
-    force_ij();
+    force_ij() = default;
 
     //getters
 
@@ -81,5 +105,9 @@ class force_ij
     void set_distance(const double& AUX);
 
 };
+
+int sign(double x);
+
+void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int number_of_celestial_objects);
 
 int write(double time, const celestial_object& A, const char* file);
