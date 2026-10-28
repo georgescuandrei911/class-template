@@ -59,9 +59,26 @@ class force_ij
 
         vector_2d component{0, 0};
 
-        double total_force = 0;
-
+        double modulus = 0;
         double distance = 0;
+
+    public:
+
+    force_ij();
+
+    //getters
+
+    vector_2d get_component();
+
+    double get_modulus();
+    double get_distance();
+
+    //setters
+
+    void set_component(const vector_2d& AUX);
+
+    void set_modulus(const double& AUX);
+    void set_distance(const double& AUX);
 
 };
 

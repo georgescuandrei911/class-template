@@ -34,6 +34,16 @@ vector_2d celestial_object :: get_position(){ return position; }
 vector_2d celestial_object :: get_velocity(){ return velocity; }
 vector_2d celestial_object :: get_acceleration(){ return acceleration; }
 
+force_ij :: force_ij() {}
+
+vector_2d force_ij :: get_component(){ return vector_2d(component.x, component.y); }
+double force_ij :: get_modulus(){ return modulus; }
+double force_ij :: get_distance(){ return distance; }
+
+void force_ij :: set_component(const vector_2d& AUX) { component = AUX; }
+void force_ij :: set_modulus(const double& AUX) { modulus = AUX; }
+void force_ij :: set_distance(const double& AUX) { distance = AUX; }
+
 int write(double time, const celestial_object& A, const char* file)
 {
     static_assert(is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
