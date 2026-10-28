@@ -1,8 +1,12 @@
 //g++ *.cpp -o main && ./main
 
-#include "lannister.h"
+#include "star.h"
 
-int main() {
-    Stea soare(1.989e30, 5778);
-    soare.afisare();
+int main()
+{
+
+    vector_2d A(2, 5), B(2, 3);
+
+    cout << A + B << endl;
+
 }
