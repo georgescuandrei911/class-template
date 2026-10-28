@@ -1,16 +1,15 @@
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
 class vector_2d
 {
 
-    private:
+    public:
 
     double x;
     double y;
-
-    public:
 
     vector_2d(double x, double y);
 
@@ -30,12 +29,18 @@ class celestial_object
 
     private:
 
-    //mass, position, velocity, acceleration:
+    //mass, radius, position, velocity, acceleration:
 
     double mass = 0; //kg
+    double radius = 0; //m
 
     vector_2d position{0, 0}; //m
     vector_2d velocity{0, 0}; //m/s
     vector_2d acceleration{0, 0}; //m/s^2
 
+    public:
+
+    celestial_object(double mass, double radius, double px, double py, double vx, double vy);
 };
+
+int write(double time, const celestial_object& A, const char* file);
