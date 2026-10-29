@@ -14,9 +14,9 @@ int main()
     double max_time, time_step;
 
     in >> number_of_celestial_objects >> max_time >> time_step;
-    ofstream(output, ios :: binary | ios :: trunc).close();
+    
+    ofstream out(output, ios::binary | ios::trunc);
 
-    ofstream out(output, ios :: binary | ios :: app);
     if (!out) { cerr << "could not open " << output << endl; return 1; }
 
     out.write(reinterpret_cast<const char*>(&number_of_celestial_objects), sizeof(number_of_celestial_objects));
@@ -24,8 +24,6 @@ int main()
     out.write(reinterpret_cast<const char*>(&max_time), sizeof(max_time));
 
     out.write(reinterpret_cast<const char*>(&time_step), sizeof(time_step));
-
-    out.close();
 
     celestial_object* celestial_objects = 
     new celestial_object[number_of_celestial_objects];
@@ -41,12 +39,39 @@ int main()
 
         set_force(forces, celestial_objects, number_of_celestial_objects);
 
+        //update velocity t = t / 2
+
         for(int j = 0; j < number_of_celestial_objects; j++)
         {
 
-            write(time, celestial_objects[j], output);
+            if (write(time, celestial_objects[j], out) != 0)
+            {
+                delete[] celestial_objects;
+                delete[] forces;
+                return 1;
+            }
 
-            update(forces[j], celestial_objects[j], time_step);
+            update_velocity(forces[j], celestial_objects[j], time_step / 2);
+
+        }
+
+        //update position t = t
+
+        for(int j = 0; j < number_of_celestial_objects; j++)
+        {
+            
+            update_position(celestial_objects[j], time_step);
+
+        }
+
+        //update velocity t = t
+
+        set_force(forces, celestial_objects, number_of_celestial_objects);
+
+        for(int j = 0; j < number_of_celestial_objects; j++)
+        {
+
+            update_velocity(forces[j], celestial_objects[j], time_step / 2);
 
         }
 
@@ -56,5 +81,7 @@ int main()
 
     delete[] celestial_objects;
     delete[] forces;
+
+    out.close();
 
 }

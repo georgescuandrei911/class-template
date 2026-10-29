@@ -107,36 +107,39 @@ void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int nu
     }
 }
 
-void update(const vector_2d AUX, celestial_object& object, double time_step)
+void update_velocity(const vector_2d AUX, celestial_object& object, double time_step)
 {
 
     object.set_acceleration(vector_2d(AUX.x / object.get_mass(), AUX.y / object.get_mass()));
 
     object.set_velocity(vector_2d(object.get_velocity().x + object.get_acceleration().x * time_step,
                                   object.get_velocity().y + object.get_acceleration().y * time_step));
-                                  
+
+}
+
+void update_position(celestial_object& object, double time_step)
+{
 
     object.set_position(vector_2d(object.get_position().x + object.get_velocity().x * time_step,
                                   object.get_position().y + object.get_velocity().y * time_step));
 
 }
 
-int write(double time, const celestial_object& A, const char* file)
+int write(double time, const celestial_object& A, ostream& output)
 {
-    static_assert(is_trivially_copyable_v<celestial_object>, "object requires custom serialization");
-
-    ofstream output(file, ios :: binary | ios :: app);
-
-    if (!output) { cerr << "could not open " << file << endl; return 1; }
+    static_assert(
+        is_trivially_copyable_v<celestial_object>,
+        "object requires custom serialization"
+    );
 
     output.write(reinterpret_cast<const char*>(&time), sizeof(time));
-
     output.write(reinterpret_cast<const char*>(&A), sizeof(A));
 
-    output.close();
-
-    if (!output) { cerr << "could not write " << file << endl; return 1; }
+    if (!output)
+    {
+        std::cerr << "could not write simulation record\n";
+        return 1;
+    }
 
     return 0;
-
 }
