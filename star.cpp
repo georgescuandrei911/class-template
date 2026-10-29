@@ -143,3 +143,4 @@ int write(double time, const celestial_object& A, ostream& output)
 
     return 0;
 }
+

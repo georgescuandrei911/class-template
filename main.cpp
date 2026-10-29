@@ -28,7 +28,7 @@ int main()
     celestial_object* celestial_objects = 
     new celestial_object[number_of_celestial_objects];
 
-    for(int i = 0; i < number_of_celestial_objects; i++) in >> celestial_objects[i];
+    for(int i = 0; i <= number_of_celestial_objects; i++) in >> celestial_objects[i];
 
     in.close();
 
