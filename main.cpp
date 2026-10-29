@@ -105,7 +105,7 @@ int main()
 
         }
 
-        if((int)time % 100000 == 0) std :: cout << 100 * time / max_time << "'%' completed" << endl;
+        if((int)time % 1000 == 0) std :: cout << 100 * time / max_time << "'%' completed" << endl;
 
     }
 
