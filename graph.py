@@ -1,237 +1,190 @@
 import argparse
 import struct
 from pathlib import Path
-
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import Button, Slider, TextBox
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Animate planets and the force on observer 0."
-    )
-    parser.add_argument("file", nargs="?", default="simulation.bin")
-    parser.add_argument("--frames", type=int, default=1200)
-    parser.add_argument("--fps", type=int, default=30)
-    parser.add_argument("--save", help="Save an animated GIF")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('file', nargs='?', default='simulation.bin')
+    parser.add_argument('--save', help='Save a static image instead of opening the viewer')
     args = parser.parse_args()
-
     path = Path(args.file)
-
-    with path.open("rb") as stream:
+    with path.open('rb') as stream:
         header = stream.read(20)
-
     if len(header) != 20:
-        parser.error("Incomplete file header.")
+        parser.error('Incomplete header')
+    count, duration, step = struct.unpack('<idd', header)
+    if count < 1 or not np.isfinite([duration, step]).all() or step <= 0:
+        parser.error('Invalid header')
+    frames_data = []
+    counts = []
+    with path.open('rb') as stream:
+        stream.seek(20)
+        previous = -np.inf
+        while True:
+            frame_header = stream.read(12)
+            if not frame_header:
+                break
+            if len(frame_header) != 12:
+                parser.error('Incomplete step header')
+            time, active = struct.unpack('<di', frame_header)
+            if not np.isfinite(time) or time <= previous or not 1 <= active <= count:
+                parser.error('Invalid step; regenerate the binary with the new output block')
+            if counts and active > counts[-1]:
+                parser.error('Body count increased unexpectedly')
+            payload = stream.read(active * 16)
+            if len(payload) != active * 16:
+                parser.error('Incomplete positions')
+            xy = np.frombuffer(payload, dtype='<f8').reshape(active, 2)
+            if not np.isfinite(xy).all():
+                parser.error('Nonfinite positions')
+            row = np.full((count, 3), np.nan)
+            row[:, 0] = time
+            row[:active, 1:3] = xy
+            frames_data.append(row)
+            counts.append(active)
+            previous = time
+    if not frames_data:
+        parser.error('No saved steps')
+    records = np.asarray(frames_data)
+    del frames_data
+    counts = np.asarray(counts)
+    frames = len(records)
+    times = records[:, 0, 0]
+    low = np.nanmin(records[:, :, 1:3], axis=(0, 1))
+    high = np.nanmax(records[:, :, 1:3], axis=(0, 1))
+    changes = np.flatnonzero(np.r_[False, counts[1:] != counts[:-1]])
 
-    count, max_time, time_step = struct.unpack("<idd", header)
-
-    if (
-        count < 2
-        or not np.isfinite([max_time, time_step]).all()
-        or time_step <= 0
-        or args.frames < 2
-        or args.fps <= 0
-    ):
-        parser.error("Invalid simulation or animation settings.")
-
-    # Your C++ writes, per simulation step:
-    #   time, force_on_observer.x, force_on_observer.y
-    #   then N records: time, mass, radius, px, py, vx, vy, ax, ay
-    width = 3 + 9 * count
-    bytes_per_step = width * 8
-    payload = path.stat().st_size - 20
-
-    if payload <= 0 or payload % bytes_per_step:
-        parser.error(
-            "Incomplete file or incompatible format. "
-            "Finish the simulation before opening the file."
-        )
-
-    saved_steps = payload // bytes_per_step
-
-    records = np.memmap(
-        path,
-        dtype="<f8",
-        mode="r",
-        offset=20,
-        shape=(saved_steps, width),
-    )
-
-    # Sample large files to keep the animation responsive.
-    indices = np.unique(
-        np.linspace(
-            0,
-            saved_steps - 1,
-            min(saved_steps, args.frames),
-            dtype=np.int64,
-        )
-    )
-
-    data = np.array(records[indices])
-    times = data[:, 0]
-    forces = data[:, 1:3]
-    bodies = data[:, 3:].reshape(-1, count, 9)
-
-    if not np.isfinite(data).all():
-        parser.error("Sampled data contains NaN or infinity.")
-
-    if np.any(np.diff(times) <= 0):
-        parser.error("Timestamps are not increasing.")
-
-    if not np.all(bodies[:, :, 0] == times[:, None]):
-        parser.error("Body timestamps do not match force timestamps.")
-
-    positions = bodies[:, :, 3:5]
-    magnitude = np.hypot(forces[:, 0], forces[:, 1])
-
-    fig, (orbit_ax, force_ax) = plt.subplots(
-        1, 2, figsize=(14, 6)
-    )
-
-    minimum = positions.min(axis=(0, 1))
-    maximum = positions.max(axis=(0, 1))
-    center = (minimum + maximum) / 2
-    span = max(float((maximum - minimum).max()), 1.0)
-
-    orbit_ax.set(
-        xlim=(center[0] - 0.6 * span, center[0] + 0.6 * span),
-        ylim=(center[1] - 0.6 * span, center[1] + 0.6 * span),
-        xlabel="X (meters)",
-        ylabel="Y (meters)",
-        title="Planet trajectories",
-    )
-    orbit_ax.set_aspect("equal")
-
-    trails = []
-    markers = []
-
+    fig, ax = plt.subplots(figsize=(10, 8))
+    fig.subplots_adjust(bottom=.25, top=.9)
+    center = (low + high) / 2
+    span = max(float((high - low).max()), 1.0)
+    ax.set(xlim=(center[0]-.55*span, center[0]+.55*span),
+           ylim=(center[1]-.55*span, center[1]+.55*span),
+           xlabel='X (meters)', ylabel='Y (meters)')
+    ax.set_aspect('equal')
+    ax.grid(True, alpha=.25)
+    trails, markers = [], []
     for body in range(count):
-        label = "Observer" if body == 0 else f"Planet {body}"
-
-        trail, = orbit_ax.plot(
-            [], [], linewidth=1, label=label
-        )
-
-        marker, = orbit_ax.plot(
-            [],
-            [],
-            "s" if body == 0 else "o",
-            color=trail.get_color(),
-            markersize=7,
-        )
-
-        trails.append(trail)
+        line, = ax.plot([], [], lw=1, label=f'Body {body}')
+        marker, = ax.plot([], [], 'o', color=line.get_color(), markersize=7)
+        trails.append(line)
         markers.append(marker)
+    ax.legend()
+    title = ax.set_title('')
+    status = fig.text(.12, .02, '', fontsize=9)
+    state = {'index': 0, 'playing': False, 'updating': False}
+    slider = Slider(fig.add_axes([.16, .15, .69, .03]), 'Time (s)',
+                    float(times[0]), float(times[-1]) if frames > 1 else float(times[0])+1,
+                    valinit=float(times[0]))
+    button = Button(fig.add_axes([.12, .065, .14, .05]), 'Play')
+    back = Button(fig.add_axes([.28, .065, .10, .05]), 'Previous')
+    forward = Button(fig.add_axes([.40, .065, .10, .05]), 'Next')
+    box = TextBox(fig.add_axes([.68, .065, .18, .05]), 'Jump to (s) ', initial='0')
 
-    orbit_ax.legend(loc="upper right")
+    def pause():
+        state['playing'] = False
+        button.label.set_text('Play')
 
-    # Force arrow starts at observer 0.
-    # A constant scale preserves relative changes in magnitude.
-    maximum_force = float(magnitude.max())
-    arrow_scale = (
-        0.2 * span / maximum_force if maximum_force > 0 else 1.0
-    )
+    def nearest(value):
+        k = int(np.searchsorted(times, value))
+        if k == 0:
+            return 0
+        if k >= frames:
+            return frames - 1
+        return k if times[k]-value < value-times[k-1] else k-1
 
-    arrow = orbit_ax.quiver(
-        [positions[0, 0, 0]],
-        [positions[0, 0, 1]],
-        [0.0],
-        [0.0],
-        angles="xy",
-        scale_units="xy",
-        scale=1,
-        color="black",
-        zorder=5,
-    )
-
-    orbit_ax.text(
-        0.02,
-        0.02,
-        "Black arrow: observer net force\n"
-        "(fixed visual scale)",
-        transform=orbit_ax.transAxes,
-    )
-
-    force_ax.plot(
-        times, magnitude, color="purple", linewidth=1
-    )
-
-    cursor = force_ax.axvline(
-        times[0], color="black", alpha=0.5
-    )
-    force_point, = force_ax.plot([], [], "ko")
-
-    force_ax.set(
-        xlabel="Time (seconds)",
-        ylabel="Net force magnitude (newtons)",
-        title="Force on observer",
-    )
-
-    for axis in (orbit_ax, force_ax):
-        axis.grid(True, alpha=0.25)
-
-    title = fig.suptitle("")
-
-    def update(frame):
+    def show(index):
+        state['index'] = int(index)
+        # Limit trail rendering, but always show the exact selected saved state.
+        # Indices may change after merging. Start new trails after each count change.
+        history_start = int(changes[np.searchsorted(changes, index, side='right')-1]) if np.searchsorted(changes, index, side='right') else 0
+        stride = max(1, (index-history_start+1)//10000)
+        indices = np.unique(np.r_[np.arange(history_start, index+1, stride), index])
+        xy = np.asarray(records[indices, :, 1:3])
         for body in range(count):
-            trails[body].set_data(
-                positions[:frame + 1, body, 0],
-                positions[:frame + 1, body, 1],
-            )
+            trails[body].set_data(xy[:, body, 0], xy[:, body, 1])
+            markers[body].set_data([records[index, body, 1]], [records[index, body, 2]])
+        title.set_text(f'Time: {times[index]:,.6f} s | Bodies: {counts[index]} | Step {index+1:,}/{frames:,}')
+        state['updating'] = True
+        try:
+            slider.set_val(float(times[index]))
+        finally:
+            state['updating'] = False
+        fig.canvas.draw_idle()
 
-            markers[body].set_data(
-                [positions[frame, body, 0]],
-                [positions[frame, body, 1]],
-            )
+    def seek(value):
+        if state['updating']:
+            return
+        pause()
+        show(nearest(value))
+        status.set_text('Paused at nearest saved time. Space: play/pause; arrows: one saved step.')
 
-        arrow.set_offsets(positions[frame, :1])
-        arrow.set_UVC(
-            [forces[frame, 0] * arrow_scale],
-            [forces[frame, 1] * arrow_scale],
-        )
+    def jump(text):
+        try:
+            value = float(text)
+            if not np.isfinite(value):
+                raise ValueError
+        except ValueError:
+            status.set_text('Enter a finite time in seconds.')
+            fig.canvas.draw_idle()
+            return
+        pause()
+        show(nearest(value))
+        status.set_text(f'Requested {value:g} s; showing nearest saved time {times[state["index"]]:g} s.')
+        fig.canvas.draw_idle()
 
-        cursor.set_xdata([times[frame], times[frame]])
-        force_point.set_data(
-            [times[frame]], [magnitude[frame]]
-        )
+    def toggle(event=None):
+        if not state['playing'] and state['index'] == frames-1:
+            show(0)
+        state['playing'] = not state['playing']
+        button.label.set_text('Pause' if state['playing'] else 'Play')
+        fig.canvas.draw_idle()
 
-        title.set_text(
-            f"Time: {times[frame]:,.1f} s | "
-            f"Observer force: {magnitude[frame]:.6g} N"
-        )
+    def move(amount):
+        pause()
+        show(max(0, min(frames-1, state['index']+amount)))
 
-        return trails + markers + [
-            arrow, cursor, force_point, title
-        ]
+    def key(event):
+        if event.inaxes is box.ax:
+            return
+        if event.key == ' ':
+            toggle()
+        elif event.key == 'right':
+            move(1)
+        elif event.key == 'left':
+            move(-1)
 
-    fig.tight_layout(rect=(0, 0, 1, 0.94))
+    def tick():
+        if state['playing']:
+            show(min(frames-1, state['index']+max(1, (frames-1)//1800)))
+            if state['index'] == frames-1:
+                pause()
+                fig.canvas.draw_idle()
 
-    animation = FuncAnimation(
-        fig,
-        update,
-        frames=len(times),
-        interval=1000 / args.fps,
-        blit=False,
-        repeat=True,
-    )
-
-    print(
-        f"{saved_steps:,} saved steps; "
-        f"{len(times):,} animation frames."
-    )
-
+    slider.on_changed(seek)
+    box.on_submit(jump)
+    button.on_clicked(toggle)
+    back.on_clicked(lambda event: move(-1))
+    forward.on_clicked(lambda event: move(1))
+    fig.canvas.mpl_connect('key_press_event', key)
+    timer = fig.canvas.new_timer(interval=33)
+    timer.add_callback(tick)
+    show(0)
+    status.set_text('Space: play/pause. Arrows: one saved step. Jump uses nearest saved time.')
+    print(f'{frames:,} saved steps, {count} bodies; {times[0]:g} to {times[-1]:g} seconds.')
     if args.save:
-        animation.save(
-            args.save,
-            writer="pillow",
-            fps=args.fps,
-        )
+        show(frames-1)
+        fig.savefig(args.save, dpi=160)
         plt.close(fig)
     else:
+        timer.start()
         plt.show()
+        timer.stop()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

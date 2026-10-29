@@ -75,35 +75,103 @@ void force_ij :: set_component(const vector_2d& AUX) { component = AUX; }
 void force_ij :: set_modulus(const double& AUX) { modulus = AUX; }
 void force_ij :: set_distance(const double& AUX) { distance = AUX; }
 
-void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int number_of_celestial_objects)
+void merge_celestial_objects( celestial_object* objects, int* count, int A, int B)
 {
 
-    for(int i = 0; i < number_of_celestial_objects; i++)AUX[i] = vector_2d(0, 0);
+    const double ma = objects[A].get_mass();
+    const double mb = objects[B].get_mass();
+    const double mass = ma + mb;
 
-    for(int i = 0; i < number_of_celestial_objects - 1; i++)
+    const vector_2d position =
+        (objects[A].get_position() * ma
+       + objects[B].get_position() * mb) * (1.0 / mass);
+
+    const vector_2d velocity =
+        (objects[A].get_velocity() * ma
+       + objects[B].get_velocity() * mb) * (1.0 / mass);
+
+    const double ra = objects[A].get_radius();
+    const double rb = objects[B].get_radius();
+
+    const double radius =
+        std::cbrt(ra * ra * ra + rb * rb * rb);
+
+    objects[A] = celestial_object(
+        mass, radius,
+        position.x, position.y,
+        velocity.x, velocity.y
+    );
+
+    for (int k = B; k < *count - 1; ++k)
+        objects[k] = objects[k + 1];
+
+    --(*count);
+}
+
+void resolve_collisions(celestial_object* objects, int& count)
+{
+    bool merged;
+
+    do
     {
+        merged = false;
 
-        for(int j = i + 1; j < number_of_celestial_objects; j++)
+        for (int i = 0; i < count - 1 && !merged; ++i)
         {
+            for (int j = i + 1; j < count; ++j)
+            {
+                const vector_2d a = objects[i].get_position();
+                const vector_2d b = objects[j].get_position();
 
-            const vector_2d distance(celestial_objects[j].get_position().x - celestial_objects[i].get_position().x,
-                                        celestial_objects[j].get_position().y - celestial_objects[i].get_position().y);
+                const double distance =
+                    std::hypot(b.x - a.x, b.y - a.y);
 
-            const double hypot_value = hypot(distance.x, distance.y);
+                const double total_radius =
+                    objects[i].get_radius() + objects[j].get_radius();
 
-            if(hypot_value == 0.0)continue; 
-
-            const double modulus = G * celestial_objects[i].get_mass() * celestial_objects[j].get_mass() / 
-                             hypot_value / hypot_value;
-
-            AUX[i].x = AUX[i].x + modulus * distance.x / hypot_value;
-            AUX[i].y = AUX[i].y + modulus * distance.y / hypot_value;
-
-            AUX[j].x = AUX[j].x - modulus * distance.x / hypot_value;
-            AUX[j].y = AUX[j].y - modulus * distance.y / hypot_value;
-
+                if (distance <= total_radius)
+                {
+                    merge_celestial_objects(objects, &count, i, j);
+                    merged = true;
+                    break;
+                }
+            }
         }
+    }
+    while (merged);
+}
 
+void set_force( vector_2d* forces, celestial_object* objects, int& count)
+{
+    resolve_collisions(objects, count);
+
+    for (int i = 0; i < count; ++i)
+        forces[i] = vector_2d(0, 0);
+
+    for (int i = 0; i < count - 1; ++i)
+    {
+        for (int j = i + 1; j < count; ++j)
+        {
+            const vector_2d a = objects[i].get_position();
+            const vector_2d b = objects[j].get_position();
+
+            const vector_2d displacement(b.x - a.x, b.y - a.y);
+            const double distance =
+                std::hypot(displacement.x, displacement.y);
+
+            if (distance == 0.0)
+                continue;
+
+            const double magnitude =
+                G * objects[i].get_mass() * objects[j].get_mass()
+                / distance / distance;
+
+            const vector_2d force =
+                displacement * (magnitude / distance);
+
+            forces[i] = forces[i] + force;
+            forces[j] = forces[j] + force * (-1.0);
+        }
     }
 }
 
@@ -160,7 +228,10 @@ int write(double time, const celestial_object& A, ostream& output)
     );
 
     output.write(reinterpret_cast<const char*>(&time), sizeof(time));
-    output.write(reinterpret_cast<const char*>(&A), sizeof(A));
+
+    const vector_2d position = A.get_position();
+
+    output.write(reinterpret_cast<const char*>(&position), sizeof(position));
 
     if (!output)
     {

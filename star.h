@@ -106,7 +106,11 @@ class force_ij
 
 };
 
-void set_force(vector_2d* AUX, const celestial_object* celestial_objects, int number_of_celestial_objects);
+void merge_celestial_objects( celestial_object* objects, int* count, int A, int B);
+
+void resolve_collisions(celestial_object* objects, int& count);
+
+void set_force( vector_2d* forces, celestial_object* objects, int& count);
 
 void update_velocity(const vector_2d AUX, celestial_object& object, double time_step);
 
