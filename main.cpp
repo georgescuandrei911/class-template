@@ -51,9 +51,9 @@ int main()
 
     const double initial_energy = total_energy(celestial_objects, number_of_celestial_objects);
 
-    double max_energy = 0;
+    double max_energy = initial_energy;
 
-    double max_error = 0;
+    double max_error = abs(initial_energy - max_energy);
 
     for(double time = 0; time <= max_time; time += time_step)
     {
@@ -62,9 +62,12 @@ int main()
 
         double current_energy = total_energy(celestial_objects, number_of_celestial_objects);
 
-        if(abs(current_energy) > max_energy)max_energy = current_energy;
+        if(current_energy > max_energy)max_energy = current_energy;
 
         if(abs(current_energy - initial_energy) > max_error)max_error = abs(current_energy - initial_energy);
+
+        out.write(reinterpret_cast<const char*>(&time), sizeof(time));
+        out.write(reinterpret_cast<const char*>(&forces[0]), sizeof(forces[0]));
 
         //update velocity t = t / 2
 
@@ -78,7 +81,7 @@ int main()
                 return 1;
             }
 
-            update_velocity(forces[j], celestial_objects[j], time_step / 2);
+            if(j != 0)update_velocity(forces[j], celestial_objects[j], time_step / 2);
 
         }
 
@@ -87,7 +90,7 @@ int main()
         for(int j = 0; j < number_of_celestial_objects; j++)
         {
             
-            update_position(celestial_objects[j], time_step);
+            if(j != 0) update_position(celestial_objects[j], time_step);
 
         }
 
@@ -98,11 +101,11 @@ int main()
         for(int j = 0; j < number_of_celestial_objects; j++)
         {
 
-            update_velocity(forces[j], celestial_objects[j], time_step / 2);
+            if(j != 0) update_velocity(forces[j], celestial_objects[j], time_step / 2);
 
         }
 
-        if((int)time % 100 == 0) std :: cout << 100 * time / max_time << "'%' completed" << endl;
+        if((int)time % 10000000 == 0) std :: cout << 100 * time / max_time << "'%' completed" << endl;
 
     }
 
@@ -117,6 +120,6 @@ int main()
 
     std :: cout << "max energy error: " << max_error << endl;
 
-    return run_simulation(output);
+    return 1;
 
 }
