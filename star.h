@@ -112,4 +112,6 @@ void update_velocity(const vector_2d AUX, celestial_object& object, double time_
 
 void update_position(celestial_object& object, double time_step);
 
+double total_energy(const celestial_object* objects, int count);
+
 int write(double time, const celestial_object& A, ostream& output);

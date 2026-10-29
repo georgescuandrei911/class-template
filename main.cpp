@@ -2,6 +2,19 @@
 
 #include "star.h"
 
+#include <cstdlib>
+#include <string>
+
+#include <iomanip>
+
+int run_simulation(const char* file)
+{
+    const string command =
+        string(".venv/bin/python \"graph.py\" \"") + file + "\"";
+
+    return system(command.c_str());
+}
+
 int main()
 {
 
@@ -9,6 +22,8 @@ int main()
     const char *input = "input.txt";
 
     ifstream in(input);
+
+    std :: cout << setprecision(17);
 
     int number_of_celestial_objects;
     double max_time, time_step;
@@ -28,16 +43,28 @@ int main()
     celestial_object* celestial_objects = 
     new celestial_object[number_of_celestial_objects];
 
-    for(int i = 0; i <= number_of_celestial_objects; i++) in >> celestial_objects[i];
+    for(int i = 0; i < number_of_celestial_objects; i++) in >> celestial_objects[i];
 
     in.close();
 
     vector_2d* forces = new vector_2d[number_of_celestial_objects];
 
+    const double initial_energy = total_energy(celestial_objects, number_of_celestial_objects);
+
+    double max_energy = 0;
+
+    double max_error = 0;
+
     for(double time = 0; time <= max_time; time += time_step)
     {
 
         set_force(forces, celestial_objects, number_of_celestial_objects);
+
+        double current_energy = total_energy(celestial_objects, number_of_celestial_objects);
+
+        if(abs(current_energy) > max_energy)max_energy = current_energy;
+
+        if(abs(current_energy - initial_energy) > max_error)max_error = abs(current_energy - initial_energy);
 
         //update velocity t = t / 2
 
@@ -75,7 +102,7 @@ int main()
 
         }
 
-        if((int)time % 100 == 0) cout << 100 * time / max_time << "'%' completed" << endl;
+        if((int)time % 100 == 0) std :: cout << 100 * time / max_time << "'%' completed" << endl;
 
     }
 
@@ -83,5 +110,13 @@ int main()
     delete[] forces;
 
     out.close();
+
+    std :: cout << "initial energy : " << initial_energy << " maximum energy: " << max_energy << endl;
+
+    std :: cout << "energy error: " << abs(initial_energy - max_energy) << endl;
+
+    std :: cout << "max energy error: " << max_error << endl;
+
+    return run_simulation(output);
 
 }

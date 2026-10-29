@@ -125,6 +125,33 @@ void update_position(celestial_object& object, double time_step)
 
 }
 
+double total_energy(const celestial_object* objects, int count)
+{
+    double energy = 0.0;
+
+    for (int i = 0; i < count; ++i)
+    {
+        const vector_2d velocity = objects[i].get_velocity();
+
+        energy += 0.5 * objects[i].get_mass()
+                * (velocity.x * velocity.x + velocity.y * velocity.y);
+
+        for (int j = i + 1; j < count; ++j)
+        {
+            const vector_2d a = objects[i].get_position();
+            const vector_2d b = objects[j].get_position();
+
+            const double distance = std::hypot(b.x - a.x, b.y - a.y);
+
+            // Requires distinct centers: distance > 0.
+            energy -= G * objects[i].get_mass()
+                        * objects[j].get_mass() / distance;
+        }
+    }
+
+    return energy;
+}
+
 int write(double time, const celestial_object& A, ostream& output)
 {
     static_assert(
